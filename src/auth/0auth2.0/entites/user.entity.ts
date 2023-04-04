@@ -48,4 +48,12 @@ export class User {
     default: null,
   })
   hashedRt: string;
+
+  @ApiProperty({
+    description: 'user verification status',
+  })
+  @Column({
+    default: false,
+  })
+  isVerified: boolean;
 }

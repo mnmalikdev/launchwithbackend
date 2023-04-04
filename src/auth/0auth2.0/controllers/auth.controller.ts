@@ -6,12 +6,14 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
+  ApiHeader,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -113,15 +115,32 @@ export class AuthController {
   }
 
   @Post('/refresh')
+  @UseGuards(AuthGuard('jwt-refresh'))
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'returns new refresh token',
+  @ApiOperation({ summary: 'Generate new tokens' })
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Refresh token . Example "Bearer {token}"',
+    example: 'Bearer <token>',
+    allowEmptyValue: false,
+    required: true,
   })
-  @ApiOperation({
-    summary: 'Create a new user and generate his access and refresh tokens',
-  })
-  async refresh() {
-    return await this.authService.refreshTokens();
+  async refreshToken(@Req() req: Request) {
+    const user = req.user;
+    const tokens = req['tokens'];
+    console.log(user);
+    return await this.authService.refreshTokens(
+      user['sub'],
+      tokens['refreshToken'],
+    );
+  }
+
+  @Get('/verifyUser')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Endpoint to verify a user after signing up' })
+  async verifyUser(@Query('token') token: string) {
+    await this.authService.verifyNewCreatedUser(token);
+    return { status: 'Success', message: 'User verified ' };
   }
 
   @Post('/logout')
@@ -133,6 +152,7 @@ export class AuthController {
   })
   @ApiOperation({ summary: 'user access to app is suspended' })
   async logOut(@Req() req: Request) {
+    console.log(req.user);
     return await this.authService.Logout(req.user['sub']);
   }
 }

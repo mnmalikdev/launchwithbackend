@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -6,9 +7,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/0auth2.0/auth.module';
 
+import { MailModule } from './mails/mailer.module';
 @Module({
   imports: [
     AuthModule,
+    MailModule,
+    HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -24,13 +28,20 @@ import { AuthModule } from './auth/0auth2.0/auth.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+
+    // MailerModule.forRoot({
+    //   transport: {
+    //     host: 'smtp.gmail.com',
+    //     port: 587,
+    //     secure: false,
+    //     auth: {
+    //       user: 'launchwith.official@gmail.com',
+    //       pass: 'Launchwith2@',
+    //     },
+    //   },
+    // }),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
-  constructor() {
-    console.log('DB_HOST:', process.env.DB_HOST);
-    console.log('DB_PORT:', process.env.DB_PORT);
-  }
-}
+export class AppModule {}

@@ -19,7 +19,11 @@ export class SignUpDTO {
   @IsNotEmpty({ message: 'Please provide a valid Password' })
   @IsString({ message: 'Invalid Password. must be valid string' })
   @MinLength(6, { message: 'Password must be 6 characters atleast' })
-  // @MaxLength(10, { message: 'Passwords cannot be longer than 10 characters' })
   @ApiProperty()
   password: string;
+
+  @IsString({ message: 'Invalid Password. must be valid string' })
+  @MinLength(6, { message: 'Password must be 6 characters atleast' })
+  @ApiProperty()
+  passwordConfirm?: string;
 }

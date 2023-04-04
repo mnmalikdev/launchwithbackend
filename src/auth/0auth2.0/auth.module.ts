@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CustomMailService } from 'src/mails/mailer.service';
 import { AuthController } from './controllers/auth.controller';
 import { User } from './entites/user.entity';
 import { GithubStrategy } from './github-login/github-oauthStrategy';
@@ -19,6 +20,7 @@ import { AtStrategy, RtStrategy } from './stratergies';
     GoogleStrategy,
     GithubStrategy,
     LinkedinStrategy,
+    CustomMailService,
   ],
 })
 export class AuthModule {}
