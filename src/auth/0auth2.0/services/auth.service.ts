@@ -9,6 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt/dist';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { CustomMailService } from 'src/mails/mailer.service';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { LogInDTO } from '../DTOs/login.dto';
@@ -22,6 +23,7 @@ export class AuthService {
     @InjectRepository(User) public userRepository: Repository<User>,
     @Inject(forwardRef(() => JwtService))
     private jwtService: JwtService,
+    private mailService: CustomMailService,
   ) {}
 
   getHello(): string {
@@ -80,7 +82,8 @@ export class AuthService {
         },
         {
           secret: process.env.AT_SECRET,
-          expiresIn: process.env.AT_EXPIRY,
+          // expiresIn: process.env.AT_EXPIRY,
+          expiresIn: '15m',
           //15 minutes
         },
       ),
@@ -92,7 +95,8 @@ export class AuthService {
         },
         {
           secret: process.env.RT_SECRET,
-          expiresIn: process.env.RT_EXPIRY,
+          // expiresIn: process.env.RT_EXPIRY,
+          expiresIn: '7d',
         },
       ),
     ]);
@@ -114,10 +118,13 @@ export class AuthService {
       throw new NotFoundException('No such user exists');
     }
 
-    await this.userRepository.update({ hashedRt: user.hashedRt }, { hashedRt });
+    user.hashedRt = hashedRt; // Update the hashedRt value in the user object
+
+    await this.userRepository.save(user); // Save the updated user object
   }
 
   async signUp(signupDTO: SignUpDTO) {
+    console.log(signupDTO);
     const user = await this.userRepository.findOne({
       where: { email: signupDTO.email },
     });
@@ -128,12 +135,13 @@ export class AuthService {
 
     const newUser = new User();
     newUser.userId = uuidv4();
-    newUser.email = signupDTO.email;
     newUser.userName = signupDTO.userName;
-
+    newUser.email = signupDTO.email;
+    // newUser.role = Role.VISIONARY;
     const hashedPassword = await this.hashData(signupDTO.password);
-
     newUser.password = hashedPassword;
+
+    await this.mailService.sendUserConfirmation(newUser.userId, newUser.email);
 
     return await this.userRepository.save(newUser);
   }
@@ -155,6 +163,10 @@ export class AuthService {
       throw new ForbiddenException('email or Password incorrect');
     }
 
+    if(user.isVerified===false){
+      throw new ForbiddenException('Please Verify Your Account Before Logging In')
+    }
+
     const tokens = await this.getTokens(user.userId, user.email, user.role);
     await this.UpdateRtHash(user.userId, tokens.refresh_token);
     return {
@@ -163,7 +175,53 @@ export class AuthService {
     };
   }
 
-  async refreshTokens() {}
+  async verifyNewCreatedUser(token: string) {
+    console.log('YE LO TOKEN', token);
+    const result = await this.jwtService.verify(token, {
+      secret: process.env.VERIFICATION_SECRET,
+    });
+
+    console.log('token==>', result);
+
+    if (!result) {
+      throw new ForbiddenException('Token Expired');
+    }
+    const userId = result.sub;
+    const user = await this.userRepository.findOne({
+      where: {
+        userId: userId,
+      },
+    });
+    if (!user) {
+      throw new ForbiddenException('Access Denied !');
+    }
+
+    // Save the updated user object
+
+    user.isVerified = true;
+    await this.userRepository.save(user);
+  }
+
+  async refreshTokens(userId: string, refreshToken: string) {
+    const user = await this.userRepository.findOne({
+      where: { userId: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+
+    const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
+    if (!rtMatches) {
+      throw new ForbiddenException('Access Denied !!');
+    }
+
+    const newTokens = await this.getTokens(user.userId, user.email, user.role);
+
+    return {
+      newTokens,
+      userDetails: user,
+    };
+  }
 
   async Logout(userId: string) {
     const user = await this.userRepository.findOne({
