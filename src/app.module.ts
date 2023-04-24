@@ -6,12 +6,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/0auth2.0/auth.module';
-
 import { MailModule } from './mails/mailer.module';
+import { ProfileModule } from './profile/profile.module';
 @Module({
   imports: [
     AuthModule,
     MailModule,
+    ProfileModule,
     HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,

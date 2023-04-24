@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Skill } from 'src/profile/entities/skills.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Role } from '../enums';
-
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -18,6 +18,36 @@ export class User {
   })
   @Column()
   userName: string;
+
+  @ApiProperty({
+    description: 'first name',
+  })
+  @Column()
+  firstName: string;
+
+  @ApiProperty({
+    description: 'last name',
+  })
+  @Column()
+  lastName: string;
+
+  @ApiProperty({
+    description: 'position or designation',
+  })
+  @Column()
+  position: string;
+
+  @ApiProperty({
+    description: 'major of study',
+  })
+  @Column()
+  major: string;
+
+  @ApiProperty({
+    description: 'a bio explaining users intro',
+  })
+  @Column()
+  bio: string;
 
   @ApiProperty({
     description: 'email of the user',
@@ -56,4 +86,7 @@ export class User {
     default: false,
   })
   isVerified: boolean;
+
+  @OneToMany(() => Skill, (skill) => skill.skillForUser)
+  skills: Skill[];
 }
