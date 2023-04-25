@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Skill } from 'src/profile/entities/skills.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Project } from 'src/projects/entities/projects.entity';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Role } from '../enums';
 @Entity()
 export class User {
@@ -89,4 +96,12 @@ export class User {
 
   @OneToMany(() => Skill, (skill) => skill.skillForUser)
   skills: Skill[];
+
+  @OneToMany(() => Project, (project) => project.projectOwner)
+  ownerInProject: Project[];
+
+  @ManyToMany(() => Project, (project) => project.contributerInProjects, {
+    onDelete: 'CASCADE',
+  })
+  contributerInProject: Project[];
 }

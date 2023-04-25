@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Category, Industry, ProjectStage } from '../enums';
 
 export class CreateProjectDTO {
@@ -66,5 +66,15 @@ export class CreateProjectDTO {
     description: 'Company website URL if any',
     example: 'https://example.com',
   })
-  companyUrl: string;
+  companyUrl?: string;
+
+  // @IsNotEmpty({ message: 'Please provide a valid userId for project owner' })
+  // @IsString({ message: 'Please provide project owner user Id as string' })
+  // @ApiProperty()
+  // projectOwner: string;
+
+  @IsOptional()
+  @IsArray()
+  @ApiProperty()
+  contributerUserIds?: string[];
 }

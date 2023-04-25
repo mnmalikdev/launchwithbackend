@@ -8,11 +8,14 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/0auth2.0/auth.module';
 import { MailModule } from './mails/mailer.module';
 import { ProfileModule } from './profile/profile.module';
+import { ProjectModule } from './projects/projects.module';
+
 @Module({
   imports: [
     AuthModule,
     MailModule,
     ProfileModule,
+    ProjectModule,
     HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,

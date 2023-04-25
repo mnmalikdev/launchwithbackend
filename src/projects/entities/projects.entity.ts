@@ -1,7 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { User } from 'src/auth/0auth2.0/entites/user.entity';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Category, Industry, ProjectStage } from '../enums';
-
 @Entity()
 export class Project {
   @PrimaryGeneratedColumn()
@@ -67,6 +74,14 @@ export class Project {
   @Column({})
   companyUrl: string;
 
-  // @ManyToOne(() => User, (user) => user.skills)
-  // skillForUser: User;
+  @ManyToOne(() => User, (user) => user.ownerInProject, {
+    onDelete: 'CASCADE',
+  })
+  projectOwner: User;
+
+  @ManyToMany(() => User, (user) => user.contributerInProject, {
+    onDelete: 'CASCADE',
+  })
+  @JoinTable()
+  contributerInProjects: User[];
 }

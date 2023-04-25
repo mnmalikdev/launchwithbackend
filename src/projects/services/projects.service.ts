@@ -1,26 +1,41 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
-
-import { User } from 'src/auth/0auth2.0/entites/user.entity';
+import { v4 as uuidv4 } from 'uuid';
+import { CreateProjectDTO } from '../DTOs/createProject.dto';
+import { Project } from '../entities/projects.entity';
 
 @Injectable()
 export class ProjectsService {
   constructor(
-    @InjectRepository(User) public userRepository: Repository<User>,
+    @InjectRepository(Project) public projectRepository: Repository<Project>,
   ) {}
 
-  async getUserById(userId: string) {
-    const user = await this.userRepository.findOne({
-      where: {
-        userId: userId,
-      },
-    });
-    if (!user) {
-      throw new NotFoundException('NO SUCH USER FOUND !');
+  async createProject(userId: string, createProjectDto: CreateProjectDTO) {
+    const project = new Project();
+    project.projectId = uuidv4();
+    project.name = createProjectDto.name;
+    project.industry = createProjectDto.industry;
+    project.basicInfo = createProjectDto.basicInfo;
+    project.moreInfo = createProjectDto.moreInfo;
+    project.category = createProjectDto.category;
+    project.stage = createProjectDto.stage;
+    project.companyUrl = createProjectDto.companyUrl ?? undefined;
+    project.projectOwner = <any>{ userId: userId };
+    if (createProjectDto.contributerUserIds) {
+      project.contributerInProjects = <any>(
+        createProjectDto?.contributerUserIds?.map((contributerId) => {
+          return <any>{ userId: contributerId };
+        })
+      );
     }
-    return user;
+    await this.projectRepository.save(project);
+  }
+
+  async fetchAllProjects() {
+    const projects = await this.projectRepository.find();
+    return projects ?? [];
   }
 }
