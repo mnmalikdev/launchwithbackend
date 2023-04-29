@@ -71,7 +71,7 @@ export class Project {
   @ApiProperty({
     description: 'company website url if any',
   })
-  @Column({})
+  @Column()
   companyUrl: string;
 
   @ManyToOne(() => User, (user) => user.ownerInProject, {
@@ -84,4 +84,9 @@ export class Project {
   })
   @JoinTable()
   contributerInProjects: User[];
+
+  @ManyToMany(() => User, (user) => user.likedProjects, {
+    onDelete: 'CASCADE',
+  })
+  likedBy: User[];
 }
