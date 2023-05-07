@@ -26,6 +26,14 @@ export class CreateProjectDTO {
   })
   basicInfo: string;
 
+  @IsString({
+    message: 'Please provide a start Date in valid format',
+  })
+  @ApiProperty({
+    description: 'tentative proejct start date.',
+  })
+  startDate?: string;
+
   @IsNotEmpty({ message: 'Please provide more information about the project' })
   @IsString({
     message:

@@ -1,13 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { User } from 'src/auth/0auth2.0/entites/user.entity';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { AddContributorDto } from '../DTOs/addContributer.dto';
 import { CreateProjectDTO } from '../DTOs/createProject.dto';
+import { RemoveContributerDto } from '../DTOs/removeContributer.dto';
+import { SearchProjectsDto } from '../DTOs/searchProject.dto';
 import { Project } from '../entities/projects.entity';
-
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -25,6 +31,7 @@ export class ProjectsService {
     project.category = createProjectDto.category;
     project.stage = createProjectDto.stage;
     project.companyUrl = createProjectDto.companyUrl;
+    project.startDate = createProjectDto.startDate;
 
     project.projectOwner = <any>{ userId };
     if (createProjectDto.contributerUserIds) {
@@ -44,6 +51,7 @@ export class ProjectsService {
 
   async fetchAllProjects() {
     const projects = await this.projectRepository.find();
+
     return projects ?? [];
   }
 
@@ -85,6 +93,7 @@ export class ProjectsService {
       where: {
         projectOwner: <any>{ userId: userId },
       },
+      relations: ['contributerInProjects'],
     });
     return projects;
   }
@@ -100,6 +109,70 @@ export class ProjectsService {
       return [];
     }
     return projects;
+  }
+
+  async addContributorToProject(addContributorDto: AddContributorDto) {
+    const { projectId, userId } = addContributorDto;
+
+    const project = await this.projectRepository.findOne({
+      where: { projectId },
+      relations: ['contributerInProjects'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with id ${projectId} not found`);
+    }
+
+    // Check if the user is already a contributor in the project
+    const existingContributor = project.contributerInProjects.find(
+      (contributor) => contributor.userId === userId,
+    );
+    if (existingContributor) {
+      throw new BadRequestException(
+        `User with id ${userId} is already a contributor in the project`,
+      );
+    }
+
+    const contributerId = <any>{ userId };
+
+    project.contributerInProjects.push(contributerId);
+    await this.projectRepository.save(project);
+
+    return {
+      message: `User with id ${userId} has been added as a contributor to project with id ${projectId}`,
+    };
+  }
+
+  async removeContributorFromProject(
+    removeContributorDto: RemoveContributerDto,
+  ) {
+    const { projectId, userId } = removeContributorDto;
+
+    const project = await this.projectRepository.findOne({
+      where: { projectId },
+      relations: ['contributerInProjects'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with id ${projectId} not found`);
+    }
+
+    // Check if the user is a contributor in the project
+    const existingContributorIndex = project.contributerInProjects.findIndex(
+      (contributor) => contributor.userId === userId,
+    );
+    if (existingContributorIndex === -1) {
+      throw new BadRequestException(
+        `User with id ${userId} is not a contributor in the project`,
+      );
+    }
+
+    project.contributerInProjects.splice(existingContributorIndex, 1);
+    await this.projectRepository.save(project);
+
+    return {
+      message: `User with id ${userId} has been removed as a contributor from project with id ${projectId}`,
+    };
   }
 
   async likeProject(userId: string, projectId: string) {
@@ -156,5 +229,35 @@ export class ProjectsService {
       },
     });
     return projects ?? [];
+  }
+
+  async searchProjects(searchProjectsDto: SearchProjectsDto) {
+    const { industries, stages, categories } = searchProjectsDto;
+
+    const queryBuilder = this.projectRepository.createQueryBuilder('project');
+
+    if (industries && industries.length) {
+      queryBuilder.andWhere('project.industry IN (:...industries)', {
+        industries,
+      });
+    }
+
+    if (stages && stages.length) {
+      queryBuilder.andWhere('project.stage IN (:...stages)', { stages });
+    }
+
+    if (categories && categories.length) {
+      queryBuilder.andWhere('project.category IN (:...categories)', {
+        categories,
+      });
+    }
+
+    const projects = await queryBuilder.getMany();
+
+    if (projects.length === 0) {
+      throw new NotFoundException('NO PROJECTS FOUND');
+    }
+
+    return projects;
   }
 }

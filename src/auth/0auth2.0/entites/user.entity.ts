@@ -92,6 +92,32 @@ export class User {
   })
   isVerified: boolean;
 
+  @ApiProperty({
+    description: 'profile Image of user',
+  })
+  @Column({
+    default: false,
+  })
+  profileImageUrl: string;
+
+  @ApiProperty({
+    description: 'cover Image of user',
+  })
+  @Column({
+    default: false,
+  })
+  coverImageUrl: string;
+
+  // note , convert to string and store. when retrieving , get in form of parsed JSON.
+  @ApiProperty({
+    description: 'urls of portfolio images ',
+  })
+  @Column({
+    default: '[]',
+    length: 5000,
+  })
+  portfolioUrls: string;
+
   @OneToMany(() => Skill, (skill) => skill.skillForUser)
   skills: Skill[];
 

@@ -19,6 +19,9 @@ export class Skill {
   @Column()
   subcategory: string;
 
-  @ManyToOne(() => User, (user) => user.skills)
+  @ManyToOne(() => User, (user) => user.skills, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   skillForUser: User;
 }

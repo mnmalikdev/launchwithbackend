@@ -39,6 +39,12 @@ export class Project {
   moreInfo: string;
 
   @ApiProperty({
+    description: 'Start Date of the project',
+  })
+  @Column()
+  startDate: string;
+
+  @ApiProperty({
     description: 'Industry that the project focuses on',
   })
   @Column({

@@ -7,24 +7,32 @@ import {
   Param,
   Post,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 
-import { ApiBody, ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 
 import { Request } from 'express';
 
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { UploadFileDTO } from 'src/google-cloud/DTOs/uploadFile.dto';
+import { GoogleDriveService } from 'src/google-cloud/google-cloud.service';
+import { AddContributorDto } from '../DTOs/addContributer.dto';
 import { CreateProjectDTO } from '../DTOs/createProject.dto';
 import { LikeProjectDTO } from '../DTOs/likeProject.dto';
+import { SearchProjectsDto } from '../DTOs/searchProject.dto';
 import { ProjectsService } from '../services/projects.service';
-
 @ApiTags('project')
 @Controller('project')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectsService) {}
+  constructor(
+    private readonly projectService: ProjectsService,
+    private readonly googleDriveService: GoogleDriveService,
+  ) {}
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
@@ -119,5 +127,44 @@ export class ProjectController {
   @ApiOperation({ summary: 'returns liked projects of a user' })
   async fetchLikedProjects(@Req() req: Request) {
     return await this.projectService.fetchLikedProjects(req.user['sub']);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('/addContributer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'add contributer to a project' })
+  async addContributer(
+    @Req() req: Request,
+    @Body() addContributerDto: AddContributorDto,
+  ) {
+    return await this.projectService.addContributorToProject(addContributerDto);
+  }
+
+  @Post('/testUpload')
+  @ApiBody({
+    description: 'dto and image file for upload',
+    type: UploadFileDTO,
+  })
+  @HttpCode(HttpStatus.OK)
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'add contributer to a project' })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file: any) {
+    const folderId = '1fxgvSIrudEQxG2rl8FTbMDQoRbi2QvAO';
+    const url = await this.googleDriveService.uploadFile(file, folderId);
+    return url;
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('/searchProjects')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'search projects based on some sort of filter.' })
+  async searchProjects(
+    @Req() req: Request,
+    @Body() searchProjectsDto: SearchProjectsDto,
+  ) {
+    return await this.projectService.searchProjects(searchProjectsDto);
   }
 }
