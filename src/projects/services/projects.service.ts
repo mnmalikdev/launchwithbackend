@@ -13,11 +13,13 @@ import { AddContributorDto } from '../DTOs/addContributer.dto';
 import { CreateProjectDTO } from '../DTOs/createProject.dto';
 import { RemoveContributerDto } from '../DTOs/removeContributer.dto';
 import { SearchProjectsDto } from '../DTOs/searchProject.dto';
+import { Industry } from '../entities/industry.entity';
 import { Project } from '../entities/projects.entity';
 @Injectable()
 export class ProjectsService {
   constructor(
     @InjectRepository(Project) public projectRepository: Repository<Project>,
+    @InjectRepository(Industry) public industryRepository: Repository<Industry>,
     @InjectRepository(User) public userRepository: Repository<User>,
   ) {}
 
@@ -25,15 +27,19 @@ export class ProjectsService {
     const project = new Project();
     project.projectId = uuidv4();
     project.name = createProjectDto.name;
-    project.industry = createProjectDto.industry;
     project.basicInfo = createProjectDto.basicInfo;
     project.moreInfo = createProjectDto.moreInfo;
-    project.category = createProjectDto.category;
     project.stage = createProjectDto.stage;
+    project.category = createProjectDto?.category;
     project.companyUrl = createProjectDto.companyUrl;
-    project.startDate = createProjectDto.startDate;
+    console.log('startdate', createProjectDto?.startDate);
+    console.log('typeof', typeof createProjectDto?.startDate);
+    const dateObj = new Date(createProjectDto.startDate);
+    const unixTimestamp = dateObj.getTime() / 1000;
+    project.startDate = unixTimestamp;
 
     project.projectOwner = <any>{ userId };
+
     if (createProjectDto.contributerUserIds) {
       project.contributerInProjects = <any>(
         createProjectDto?.contributerUserIds.map((contributer) => {
@@ -41,6 +47,18 @@ export class ProjectsService {
         })
       );
     }
+
+    project.industry = createProjectDto?.industry?.map((industryName) => {
+      const industry = new Industry();
+      industry.industryId = uuidv4();
+      industry.name = industryName;
+      industry.belongsToProject = <any>{
+        projectId: project.projectId,
+      };
+
+      return industry;
+    });
+
     await this.projectRepository.save(project);
 
     return {
@@ -50,7 +68,9 @@ export class ProjectsService {
   }
 
   async fetchAllProjects() {
-    const projects = await this.projectRepository.find();
+    const projects = await this.projectRepository.find({
+      relations: ['industry'],
+    });
 
     return projects ?? [];
   }
@@ -81,6 +101,7 @@ export class ProjectsService {
       where: {
         projectId: projectId,
       },
+      relations: ['industry'],
     });
     if (!project) {
       throw new NotFoundException(' NO SUCH PROJECT FOUND !');
@@ -93,14 +114,14 @@ export class ProjectsService {
       where: {
         projectOwner: <any>{ userId: userId },
       },
-      relations: ['contributerInProjects'],
+      relations: ['contributerInProjects', 'industry'],
     });
     return projects;
   }
 
   async fetchProjectsForContributer(userId: string) {
     const projects = await this.projectRepository.find({
-      relations: ['contributerInProjects'],
+      relations: ['contributerInProjects', 'industry'],
       where: {
         contributerInProjects: { userId },
       },
@@ -223,7 +244,7 @@ export class ProjectsService {
 
   async fetchLikedProjects(userId: string) {
     const projects = await this.projectRepository.find({
-      relations: ['likedBy'],
+      relations: ['likedBy', 'industry'],
       where: {
         likedBy: { userId },
       },
@@ -234,12 +255,19 @@ export class ProjectsService {
   async searchProjects(searchProjectsDto: SearchProjectsDto) {
     const { industries, stages, categories } = searchProjectsDto;
 
-    const queryBuilder = this.projectRepository.createQueryBuilder('project');
+    const queryBuilder = this.projectRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.industry', 'industry');
 
     if (industries && industries.length) {
-      queryBuilder.andWhere('project.industry IN (:...industries)', {
-        industries,
-      });
+      const subQuery = this.projectRepository
+        .createQueryBuilder('subquery')
+        .leftJoin('subquery.industry', 'industry')
+        .where('industry.name IN (:...industries)', { industries })
+        .select('DISTINCT(subquery.id)');
+
+      queryBuilder.andWhere(`project.id IN (${subQuery.getQuery()})`);
+      queryBuilder.setParameters(subQuery.getParameters());
     }
 
     if (stages && stages.length) {

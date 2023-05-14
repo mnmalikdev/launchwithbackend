@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Category, Industry, ProjectStage } from '../enums';
+import { Category, ProjectStage } from '../enums';
 
 export class CreateProjectDTO {
   @IsNotEmpty({ message: 'Please provide a valid project name' })
@@ -32,7 +32,7 @@ export class CreateProjectDTO {
   @ApiProperty({
     description: 'tentative proejct start date.',
   })
-  startDate?: string;
+  startDate?: number;
 
   @IsNotEmpty({ message: 'Please provide more information about the project' })
   @IsString({
@@ -45,13 +45,15 @@ export class CreateProjectDTO {
   })
   moreInfo: string;
 
+  // todo : recheck after making seperate tables
+  @IsNotEmpty({ message: 'Please provide industry ' })
+  @IsArray()
   @ApiProperty({
     description: 'Industry that the project focuses on',
-    enum: Industry,
-    example: Industry.WebProgrammingAppDesign,
   })
-  industry: Industry;
+  industry: string[];
 
+  @IsNotEmpty({ message: 'Please choose category for project ' })
   @ApiProperty({
     description: 'Specific category that defines scope of work',
     enum: Category,
@@ -59,6 +61,7 @@ export class CreateProjectDTO {
   })
   category: Category;
 
+  @IsNotEmpty({ message: 'Please choose a valid stage for project ' })
   @ApiProperty({
     description: 'Current stage of the project',
     enum: ProjectStage,
@@ -75,11 +78,6 @@ export class CreateProjectDTO {
     example: 'https://example.com',
   })
   companyUrl?: string;
-
-  // @IsNotEmpty({ message: 'Please provide a valid userId for project owner' })
-  // @IsString({ message: 'Please provide project owner user Id as string' })
-  // @ApiProperty()
-  // projectOwner: string;
 
   @IsOptional()
   @IsArray()

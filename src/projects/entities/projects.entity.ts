@@ -8,7 +8,8 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Category, Industry, ProjectStage } from '../enums';
+import { Category, ProjectStage } from '../enums';
+import { Industry } from './industry.entity';
 @Entity()
 export class Project {
   @PrimaryGeneratedColumn()
@@ -29,30 +30,30 @@ export class Project {
   @ApiProperty({
     description: 'basic details about project',
   })
-  @Column()
+  @Column({
+    length: 1200,
+  })
   basicInfo: string;
 
   @ApiProperty({
     description: 'basic details about project',
   })
-  @Column()
+  @Column({
+    length: 1200,
+  })
   moreInfo: string;
 
   @ApiProperty({
     description: 'Start Date of the project',
   })
   @Column()
-  startDate: string;
+  startDate: number;
 
-  @ApiProperty({
-    description: 'Industry that the project focuses on',
+  @ManyToMany(() => Industry, (industry) => industry.belongsToProject, {
+    cascade: true,
+    onDelete: 'CASCADE',
   })
-  @Column({
-    type: 'enum',
-    enum: Industry,
-    default: Industry.WebProgrammingAppDesign,
-  })
-  industry: Industry;
+  industry: Industry[];
 
   @ApiProperty({
     description: 'specific category that defines scope of work',

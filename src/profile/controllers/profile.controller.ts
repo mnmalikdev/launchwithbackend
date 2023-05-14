@@ -71,7 +71,7 @@ export class ProfileController {
   @Get('/fetchProfile/:userId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'returns specific project' })
-  async fetchProject(@Param('userId') userId: string) {
+  async fetchProfile(@Param('userId') userId: string) {
     return await this.profileService.fetchUserProfile(userId);
   }
 

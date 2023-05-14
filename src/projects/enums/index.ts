@@ -1,4 +1,4 @@
-export enum Industry {
+export enum Industries {
   AdminSupWasteMgmtRemedSrvs = 'Admin, Support, Waste Management, and Remediation Services',
   Agriculture = 'Agriculture',
   ForestryFishingHunting = 'Forestry, Fishing, and Hunting',
