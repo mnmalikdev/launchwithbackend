@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   UploadedFile,
@@ -23,6 +25,7 @@ import { UploadFileDTO } from 'src/google-cloud/DTOs/uploadFile.dto';
 import { GoogleDriveService } from 'src/google-cloud/google-cloud.service';
 import { AddContributorDto } from '../DTOs/addContributer.dto';
 import { CreateProjectDTO } from '../DTOs/createProject.dto';
+import { EditProjectDTO } from '../DTOs/editProject.dto';
 import { LikeProjectDTO } from '../DTOs/likeProject.dto';
 import { SearchProjectsDto } from '../DTOs/searchProject.dto';
 import { ProjectsService } from '../services/projects.service';
@@ -68,6 +71,15 @@ export class ProjectController {
   @ApiOperation({ summary: 'returns specific project' })
   async fetchProject(@Param('projectId') projectId: string) {
     return await this.projectService.fetchProject(projectId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('/deleteProject/:projectId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'deletes from db a specific project' })
+  async deleteProject(@Param('projectId') projectId: string) {
+    return await this.projectService.deleteProject(projectId);
   }
 
   @ApiBearerAuth()
@@ -139,6 +151,18 @@ export class ProjectController {
     @Body() addContributerDto: AddContributorDto,
   ) {
     return await this.projectService.addContributorToProject(addContributerDto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('/editProject/:projectId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'edit an existing project' })
+  async editProject(
+    @Param('projectId') projectId: string,
+    @Body() editProjectDto: EditProjectDTO,
+  ) {
+    return await this.projectService.editProject(projectId, editProjectDto);
   }
 
   @Post('/testUpload')

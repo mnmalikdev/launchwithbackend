@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { AddContributorDto } from '../DTOs/addContributer.dto';
 import { CreateProjectDTO } from '../DTOs/createProject.dto';
+import { EditProjectDTO } from '../DTOs/editProject.dto';
 import { RemoveContributerDto } from '../DTOs/removeContributer.dto';
 import { SearchProjectsDto } from '../DTOs/searchProject.dto';
 import { Industry } from '../entities/industry.entity';
@@ -32,11 +33,10 @@ export class ProjectsService {
     project.stage = createProjectDto.stage;
     project.category = createProjectDto?.category;
     project.companyUrl = createProjectDto.companyUrl;
-    console.log('startdate', createProjectDto?.startDate);
-    console.log('typeof', typeof createProjectDto?.startDate);
-    const dateObj = new Date(createProjectDto.startDate);
-    const unixTimestamp = dateObj.getTime() / 1000;
-    project.startDate = unixTimestamp;
+    console.log('startdate==>', createProjectDto?.startDate);
+    console.log('typeof==>', typeof createProjectDto?.startDate);
+
+    project.startDate = createProjectDto?.startDate;
 
     project.projectOwner = <any>{ userId };
 
@@ -67,33 +67,89 @@ export class ProjectsService {
     };
   }
 
-  async fetchAllProjects() {
-    const projects = await this.projectRepository.find({
-      relations: ['industry'],
-    });
-
-    return projects ?? [];
-  }
-
-  async deleteProject(projectId: string) {
+  async editProject(projectId: string, editProjectDto: EditProjectDTO) {
+    console.log(editProjectDto);
     const project = await this.projectRepository.findOne({
       where: {
-        projectId: projectId,
+        projectId,
       },
     });
 
     if (!project) {
-      throw new NotFoundException(' NO SUCH PROJECT FOUND !');
+      throw new NotFoundException('Project not found');
     }
 
-    await this.projectRepository.delete({
-      projectId: projectId,
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (editProjectDto.name) {
+      project.name = editProjectDto.name;
+    }
+
+    if (editProjectDto.basicInfo) {
+      project.basicInfo = editProjectDto.basicInfo;
+    }
+
+    if (editProjectDto.moreInfo) {
+      project.moreInfo = editProjectDto.moreInfo;
+    }
+
+    if (editProjectDto.stage) {
+      project.stage = editProjectDto.stage;
+    }
+
+    if (editProjectDto.category) {
+      project.category = editProjectDto.category;
+    }
+
+    if (editProjectDto.companyUrl) {
+      project.companyUrl = editProjectDto.companyUrl;
+    }
+
+    if (editProjectDto.startDate) {
+      project.startDate = editProjectDto.startDate;
+    }
+
+    if (editProjectDto.contributorUserIds) {
+      project.contributerInProjects = <any>(
+        editProjectDto?.contributorUserIds.map((contributer) => {
+          return <any>{ userId: contributer };
+        })
+      );
+    }
+
+    project.industry = editProjectDto?.industry?.map((industryName) => {
+      const industry = new Industry();
+      industry.industryId = uuidv4();
+      industry.name = industryName;
+      industry.belongsToProject = <any>{
+        projectId: project.projectId,
+      };
+
+      return industry;
     });
 
+    await this.projectRepository.save(project);
+
     return {
-      status: 'sucess',
-      message: 'project deleted !',
+      status: 'success',
+      data: project,
     };
+  }
+
+  async fetchAllProjects() {
+    const projects = await this.projectRepository.find({
+      relations: [
+        'likedBy',
+        'industry',
+        'projectOwner',
+        'projectOwner.skills',
+        'contributerInProjects',
+      ],
+    });
+
+    return projects ?? [];
   }
 
   async fetchProject(projectId: string) {
@@ -107,6 +163,27 @@ export class ProjectsService {
       throw new NotFoundException(' NO SUCH PROJECT FOUND !');
     }
     return project;
+  }
+
+  async deleteProject(projectId: string) {
+    const project = await this.projectRepository.findOne({
+      where: {
+        projectId: projectId,
+      },
+      relations: ['industry'],
+    });
+    if (!project) {
+      throw new NotFoundException(' NO SUCH PROJECT FOUND !');
+    }
+
+    await this.projectRepository.delete({
+      projectId: projectId,
+    });
+
+    return {
+      status: 'Success',
+      message: 'project deleted !!',
+    };
   }
 
   async fetchProjectsForOwner(userId: string) {
@@ -244,7 +321,7 @@ export class ProjectsService {
 
   async fetchLikedProjects(userId: string) {
     const projects = await this.projectRepository.find({
-      relations: ['likedBy', 'industry'],
+      relations: ['likedBy', 'industry', 'projectOwner', 'projectOwner.skills'],
       where: {
         likedBy: { userId },
       },

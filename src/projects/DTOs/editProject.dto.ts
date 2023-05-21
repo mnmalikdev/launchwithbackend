@@ -1,27 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsArray,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 import { Category, ProjectStage } from '../enums';
 
-export class CreateProjectDTO {
-  @IsNotEmpty({ message: 'Please provide a valid project name' })
+export class EditProjectDTO {
+  @IsOptional()
   @IsString({
-    message: 'Invalid project names. project names  must be valid string',
+    message: 'Invalid project name. Project name must be a valid string',
   })
   @ApiProperty({
-    description: 'project name',
-    example: 'project name',
+    description: 'Project name',
+    example: 'Project Name',
+    required: false,
   })
-  name: string;
+  name?: string;
 
   //  more fields
 
-  @IsNotEmpty({ message: 'Please provide basic information about the project' })
+  @IsOptional()
   @IsString({
     message:
       'Invalid basic information. Basic information must be a valid string',
@@ -29,16 +24,18 @@ export class CreateProjectDTO {
   @ApiProperty({
     description: 'Basic information about the project',
     example: 'This is a brief summary of my project',
+    required: false,
   })
-  basicInfo: string;
+  basicInfo?: string;
 
-  @IsNumber()
+  @IsOptional()
   @ApiProperty({
-    description: 'tentative proejct start date.',
+    description: 'Tentative project start date',
+    required: false,
   })
   startDate?: number;
 
-  @IsNotEmpty({ message: 'Please provide more information about the project' })
+  @IsOptional()
   @IsString({
     message:
       'Invalid more information. More information must be a valid string',
@@ -46,45 +43,53 @@ export class CreateProjectDTO {
   @ApiProperty({
     description: 'More detailed information about the project',
     example: 'This is a more detailed description of my project',
+    required: false,
   })
-  moreInfo: string;
+  moreInfo?: string;
 
-  // todo : recheck after making seperate tables
-  @IsNotEmpty({ message: 'Please provide industry ' })
+  // todo: recheck after making separate tables
+  @IsOptional()
   @IsArray()
   @ApiProperty({
     description: 'Industry that the project focuses on',
+    required: false,
   })
-  industry: string[];
+  industry?: string[];
 
-  @IsNotEmpty({ message: 'Please choose category for project ' })
+  @IsOptional()
   @ApiProperty({
-    description: 'Specific category that defines scope of work',
+    description: 'Specific category that defines the scope of work',
     enum: Category,
     example: Category.FullStackDevelopment,
+    required: false,
   })
-  category: Category;
+  category?: Category;
 
-  @IsNotEmpty({ message: 'Please choose a valid stage for project ' })
+  @IsOptional()
   @ApiProperty({
     description: 'Current stage of the project',
     enum: ProjectStage,
     example: ProjectStage.IdeaConcept,
+    required: false,
   })
-  stage: ProjectStage;
+  stage?: ProjectStage;
 
   @IsOptional()
   @IsString({
-    message: 'Invalid company url.  must be a valid string',
+    message: 'Invalid company URL. Must be a valid string',
   })
   @ApiProperty({
     description: 'Company website URL if any',
     example: 'https://example.com',
+    required: false,
   })
   companyUrl?: string;
 
   @IsOptional()
   @IsArray()
-  @ApiProperty()
-  contributerUserIds?: string[];
+  @ApiProperty({
+    description: 'Contributor user IDs',
+    required: false,
+  })
+  contributorUserIds?: string[];
 }
