@@ -81,9 +81,9 @@ export class AuthService {
           role: role,
         },
         {
-          secret: process.env.AT_SECRET,
+          secret: 'at-secret',
           // expiresIn: process.env.AT_EXPIRY,
-          expiresIn: '15m',
+          expiresIn: '200d',
           //15 minutes
         },
       ),
@@ -94,7 +94,7 @@ export class AuthService {
           role: role,
         },
         {
-          secret: process.env.RT_SECRET,
+          secret: 'rt-secret',
           // expiresIn: process.env.RT_EXPIRY,
           expiresIn: '7d',
         },
@@ -156,16 +156,21 @@ export class AuthService {
 
     const passwordMatchs = await bcrypt.compare(
       loginDTO.password,
-      user.password,
+      user?.password,
     );
 
     if (!passwordMatchs) {
       throw new ForbiddenException('email or Password incorrect');
     }
 
-    if(user.isVerified===false){
-      throw new ForbiddenException('Please Verify Your Account Before Logging In')
+    if (user?.isVerified === false) {
+      throw new ForbiddenException(
+        'Please Verify Your Account Before Logging In',
+      );
     }
+
+    const parsedPortfolioUrls = JSON.parse(user?.portfolioUrls);
+    user.portfolioUrls = parsedPortfolioUrls;
 
     const tokens = await this.getTokens(user.userId, user.email, user.role);
     await this.UpdateRtHash(user.userId, tokens.refresh_token);

@@ -143,9 +143,9 @@ export class AuthController {
     return { status: 'Success', message: 'User verified ' };
   }
 
-  @Post('/logout')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
+  @Post('/logout')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'nullifies user tokens and log out of app',

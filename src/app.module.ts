@@ -6,12 +6,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/0auth2.0/auth.module';
-
+import { GoogleDriveModule } from './google-cloud/google.module';
 import { MailModule } from './mails/mailer.module';
+import { ProfileModule } from './profile/profile.module';
+import { ProjectModule } from './projects/projects.module';
+
 @Module({
   imports: [
     AuthModule,
     MailModule,
+    ProfileModule,
+    ProjectModule,
+    GoogleDriveModule,
     HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,
