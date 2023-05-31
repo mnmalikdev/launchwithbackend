@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Skill } from 'src/profile/entities/skills.entity';
+import { CollabRequest } from 'src/projects/entities/collabRequest.entity';
 import { Project } from 'src/projects/entities/projects.entity';
 import {
   Column,
@@ -51,7 +52,7 @@ export class User {
   @ApiProperty({
     description: 'a bio explaining users intro',
   })
-  @Column({ default: '' })
+  @Column({ default: '', length: 550 })
   bio: string;
 
   @ApiProperty({
@@ -72,7 +73,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: Role,
-    default: Role.VISIONARY,
+    default: Role.NOT_SET,
   })
   role: Role;
 
@@ -126,6 +127,12 @@ export class User {
     onDelete: 'CASCADE',
   })
   ownerInProject: Project;
+
+  @OneToMany(
+    () => CollabRequest,
+    (collabRequest) => collabRequest.collabRequestedBy,
+  )
+  collabRequestSender: CollabRequest[];
 
   @ManyToMany(() => Project, (project) => project.contributerInProjects, {
     cascade: true,

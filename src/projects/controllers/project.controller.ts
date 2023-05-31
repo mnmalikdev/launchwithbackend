@@ -24,6 +24,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UploadFileDTO } from 'src/google-cloud/DTOs/uploadFile.dto';
 import { GoogleDriveService } from 'src/google-cloud/google-cloud.service';
 import { AddContributorDto } from '../DTOs/addContributer.dto';
+import { CreateCollabRequestDTO } from '../DTOs/createCollabRequest.dto';
 import { CreateProjectDTO } from '../DTOs/createProject.dto';
 import { EditProjectDTO } from '../DTOs/editProject.dto';
 import { LikeProjectDTO } from '../DTOs/likeProject.dto';
@@ -111,6 +112,7 @@ export class ProjectController {
     @Req() req: Request,
     @Body() likeProjectDto: LikeProjectDTO,
   ) {
+    console.log(likeProjectDto?.projectId);
     return await this.projectService.likeProject(
       req.user['sub'],
       likeProjectDto.projectId,
@@ -163,6 +165,32 @@ export class ProjectController {
     @Body() editProjectDto: EditProjectDTO,
   ) {
     return await this.projectService.editProject(projectId, editProjectDto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/fetchMyCollabRequests')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'returns collab requests of a contributer' })
+  async fetchMyCollabReqs(@Req() req: Request) {
+    return await this.projectService.fetchCollabRequests(req.user['sub']);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('/sendCollabRequest')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'send collaboration request upon a specific project',
+  })
+  async sendCollabRequest(
+    @Req() req: Request,
+    @Body() createCollabReq: CreateCollabRequestDTO,
+  ) {
+    return await this.projectService.sendCollabRequest(
+      req.user['sub'],
+      createCollabReq,
+    );
   }
 
   @Post('/testUpload')

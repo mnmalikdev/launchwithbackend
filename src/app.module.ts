@@ -10,6 +10,7 @@ import { GoogleDriveModule } from './google-cloud/google.module';
 import { MailModule } from './mails/mailer.module';
 import { ProfileModule } from './profile/profile.module';
 import { ProjectModule } from './projects/projects.module';
+import dbConfig from './config/db.config';
 
 @Module({
   imports: [
@@ -25,11 +26,11 @@ import { ProjectModule } from './projects/projects.module';
 
     TypeOrmModule.forRoot({
       type: 'mysql',
-      port: 3306,
-      host: 'localhost',
-      username: 'root',
-      password: 'Islamabad422#',
-      database: 'launchwithdb',
+      port: Number(process.env.DB_PORT),
+      host: process.env.DB_HOST,
+      username: process.env.DB_USERNAME,
+      password: process.env.PASSWORD,
+      database: process.env.DB_NAME,
       entities: [__dirname + '/../**/*.entity.{js,ts}'],
       autoLoadEntities: true,
       synchronize: true,

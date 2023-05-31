@@ -10,16 +10,20 @@ import { User } from 'src/auth/0auth2.0/entites/user.entity';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { AddContributorDto } from '../DTOs/addContributer.dto';
+import { CreateCollabRequestDTO } from '../DTOs/createCollabRequest.dto';
 import { CreateProjectDTO } from '../DTOs/createProject.dto';
 import { EditProjectDTO } from '../DTOs/editProject.dto';
 import { RemoveContributerDto } from '../DTOs/removeContributer.dto';
 import { SearchProjectsDto } from '../DTOs/searchProject.dto';
+import { CollabRequest } from '../entities/collabRequest.entity';
 import { Industry } from '../entities/industry.entity';
 import { Project } from '../entities/projects.entity';
 @Injectable()
 export class ProjectsService {
   constructor(
     @InjectRepository(Project) public projectRepository: Repository<Project>,
+    @InjectRepository(CollabRequest)
+    public collabReqRepo: Repository<CollabRequest>,
     @InjectRepository(Industry) public industryRepository: Repository<Industry>,
     @InjectRepository(User) public userRepository: Repository<User>,
   ) {}
@@ -191,17 +195,21 @@ export class ProjectsService {
       where: {
         projectOwner: <any>{ userId: userId },
       },
-      relations: ['contributerInProjects', 'industry'],
+      relations: [
+        'contributerInProjects',
+        'industry',
+        'collabRequests.collabRequestedBy',
+      ],
     });
     return projects;
   }
 
   async fetchProjectsForContributer(userId: string) {
     const projects = await this.projectRepository.find({
-      relations: ['contributerInProjects', 'industry'],
       where: {
         contributerInProjects: { userId },
       },
+      relations: ['contributerInProjects', 'industry', 'collabRequests'],
     });
     if (!projects) {
       return [];
@@ -364,5 +372,43 @@ export class ProjectsService {
     }
 
     return projects;
+  }
+
+  async sendCollabRequest(
+    userId: string,
+    collabReqDto: CreateCollabRequestDTO,
+  ) {
+    console.log(collabReqDto?.projectId);
+    const collabRequest = new CollabRequest();
+    collabRequest.collabRequestId = uuidv4();
+    collabRequest.requestMessage = collabReqDto?.requestMessage;
+    collabRequest.collabRequestedBy = <any>{ userId };
+    // collabRequest.projectAssociatedWith = <any>{
+    //   projectId: collabReqDto?.projectId,
+    // };
+
+    const project = await this.projectRepository.findOne({
+      where: {
+        projectId: collabReqDto?.projectId,
+      },
+    });
+    collabRequest.projectAssociatedWith = project;
+
+    await this.collabReqRepo.save(collabRequest);
+
+    return {
+      status: 'success',
+      data: collabRequest,
+    };
+  }
+
+  async fetchCollabRequests(userId: string) {
+    const collabRequests = await this.collabReqRepo.find({
+      where: {
+        collabRequestedBy: <any>{ userId },
+      },
+      relations: ['projectAssociatedWith', 'collabRequestedBy'],
+    });
+    return collabRequests;
   }
 }

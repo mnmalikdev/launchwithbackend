@@ -81,7 +81,7 @@ export class AuthService {
           role: role,
         },
         {
-          secret: 'at-secret',
+          secret: process.env.AT_EXPIRY,
           // expiresIn: process.env.AT_EXPIRY,
           expiresIn: '200d',
           //15 minutes
@@ -94,7 +94,7 @@ export class AuthService {
           role: role,
         },
         {
-          secret: 'rt-secret',
+          secret: process.env.RT_EXPIRY,
           // expiresIn: process.env.RT_EXPIRY,
           expiresIn: '7d',
         },

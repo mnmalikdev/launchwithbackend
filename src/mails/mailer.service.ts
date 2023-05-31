@@ -17,18 +17,17 @@ export class CustomMailService {
       },
       {
         secret: process.env.VERIFICATION_SECRET,
-        // expiresIn: process.env.RT_EXPIRY,
         expiresIn: '7d',
       },
     );
-    const url = `${process.env.CONFIRMATION_URL}?token=${token}`;
+    const url = `${process.env.BASE_URL_FRONTEND}profile/accountConfirmation?token=${token}`;
 
     console.log('token==>', token);
 
     await this.mailerService.sendMail({
       to: email,
       // from: '"Support Team" <support@example.com>', // override default from
-      subject: 'Welcome to Nice App! Confirm your Email',
+      subject: 'Welcome to LaunchWith! Please Confirm your Email',
       template: './confirmation', // `.hbs` extension is appended automatically
       context: {
         // ✏️ filling curly brackets with content

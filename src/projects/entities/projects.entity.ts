@@ -6,9 +6,11 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Category, ProjectStage } from '../enums';
+import { CollabRequest } from './collabRequest.entity';
 import { Industry } from './industry.entity';
 @Entity()
 export class Project {
@@ -91,6 +93,15 @@ export class Project {
   })
   @JoinTable()
   contributerInProjects: User[];
+
+  @OneToMany(
+    () => CollabRequest,
+    (collabRequest) => collabRequest.projectAssociatedWith,
+    {
+      cascade: true,
+    },
+  )
+  collabRequests: CollabRequest[];
 
   @ManyToMany(() => User, (user) => user.likedProjects, {
     onDelete: 'CASCADE',
